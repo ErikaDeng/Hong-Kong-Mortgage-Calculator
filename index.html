@@ -1,0 +1,1591 @@
+<!DOCTYPE html><html><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;"><meta http-equiv="x-dns-prefetch-control" content="off"><script src="https://puc.poecdn.net/authenticated_preview_page/standard.3ef2c256959faf5a756d.js"></script>
+    <meta charset="utf-8">
+    <title>Poe</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://puc.poecdn.net/authenticated_preview_page/disableWebRTC.9710cebe07429a9e8e06.js"></script><meta name="x-poe-allow-downloads" content="true"><meta name="x-poe-datastore-behavior" content="disabled"><script src="https://puc.poecdn.net/authenticated_preview_page/tw.50ec1b0612bf5b0c30a5.js"></script><script src="https://puc.poecdn.net/authenticated_preview_page/deps.faccd16000d314dc16d5.js"></script><script src="https://puc.poecdn.net/authenticated_preview_page/exports.b0f0f482cdeb5302b0b9.js"></script><script src="https://puc.poecdn.net/authenticated_preview_page/renderer.75c73ae6b4235f62945a.js"></script><script>Object.defineProperty(exports, "__esModule", {value: true}); function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }var _react = require('react'); var _react2 = _interopRequireDefault(_react);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var _lucidereact = require('lucide-react');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var _recharts = require('recharts');
+
+/* ------------------------------------------------------------------ */
+/* 集中配置：政策與信源（更新時只需修改此處）                              */
+/* ------------------------------------------------------------------ */
+const POLICY_CONFIG = {
+  status: "政策及稅率尚未核驗",
+  checkedOn: "2026-11-20",
+  checkMethod:
+    "以網絡搜尋找到官方文件連結，僅閱讀搜尋摘要，未逐項核對全文及生效日期。",
+  // 已核驗並可用於計算的參數：目前為空。本工具不依據任何監管上限判斷資格或計算稅款。
+  verifiedParameters: [],
+  sources: [
+    {
+      id: "hkma-2024-11",
+      category: "regulation",
+      org: "香港金融管理局",
+      title: "Prudential Measures for Property Mortgage Loans（文件編號 20241119-2）",
+      url: "https://brdr.hkma.gov.hk/eng/doc-ldg/docId/getPdf/20241119-2-EN/20241119-2-EN.pdf",
+      effective: "待核實（檔案編號顯示為 2024-11-19，並非已確認的生效日）",
+      note: "搜尋摘要提及一般情況下的最高按揭成數及 DSR 限額。僅供參考，本工具不用於判斷資格。",
+    },
+    {
+      id: "hkma-2025-01",
+      category: "regulation",
+      org: "香港金融管理局",
+      title: "Prudential Measures for Property Mortgage Loans（文件編號 20250106-1）",
+      url: "https://brdr.hkma.gov.hk/gb_chi/doc-ldg/docId/getPdf/20250106-1-EN/20250106-1-EN.pdf",
+      effective: "待核實（檔案編號顯示為 2025-01-06）",
+      note: "搜尋摘要提及針對特定條件（如分期付款一手住宅買家）的特別安排，適用條件較多，須自行核對全文。",
+    },
+    {
+      id: "hkma-mip-2022",
+      category: "insurance",
+      org: "香港金融管理局",
+      title: "Mortgage Insurance Programme（2022 年 2 月 23 日起生效版本附件）",
+      url: "https://www.hkma.gov.hk/media/eng/doc/key-information/press-release/2022/20220223e3a1.pdf",
+      effective: "文件標題顯示 2022-02-23；其後是否修訂待核實",
+      note: "按揭保險的樓價範圍、首置及收入條件等可能已更新，請以 HKMC Insurance 現行資料為準。",
+    },
+    {
+      id: "hkmc-mip",
+      category: "insurance",
+      org: "香港按揭證券有限公司／香港按證保險有限公司",
+      title: "Mortgage Insurance Programme（按揭保險計劃）",
+      url: "https://www.hkmc.com.hk/eng/our_business/mortgage_insurance_programme.html",
+      effective: "網頁未提供統一生效日，待核實",
+      note: "搜尋摘要提及高成數按揭設有資格條件，保費可由申請人選擇融資。保費率及資格以官方資料為準。",
+    },
+    {
+      id: "ird-home",
+      category: "tax",
+      org: "香港稅務局",
+      title: "稅務局網站（請由首頁進入「印花稅」查閱住宅物業交易稅率）",
+      url: "https://www.ird.gov.hk/",
+      effective: "待核實",
+      note: "本次未取得印花稅稅率頁面的直接連結，故不提供印花稅計算，請手動填寫。",
+    },
+    {
+      id: "ird-ar-2425",
+      category: "tax",
+      org: "香港稅務局",
+      title: "稅務局 2024-25 年報（含印花稅調整的概述）",
+      url: "https://www.ird.gov.hk/dar/2024-25/table/en/ar_2425.pdf",
+      effective: "年報，非稅率表，待核實",
+      note: "年報僅作背景參考，不能取代稅率表及個案判斷。",
+    },
+    {
+      id: "citi-kfs",
+      category: "bank",
+      org: "花旗銀行（香港）",
+      title: "住宅按揭貸款產品資料概要（官方 PDF，示例）",
+      url: "https://www.citibank.com.hk/english/loans/mortgages/pdf/key-facts-statement.pdf",
+      effective: "文件顯示生效日期：2025-11-03",
+      note: "僅作為說明 H 按、封頂及計息條款結構的例子，不代表推薦或現時報價。各銀行條款不同。",
+    },
+  ],
+};
+
+const CATEGORY_LABEL = {
+  regulation: "監管規則",
+  insurance: "按揭保險",
+  tax: "印花稅",
+  bank: "銀行產品條款",
+};
+
+/* ------------------------------------------------------------------ */
+/* 常數與預設值                                                          */
+/* ------------------------------------------------------------------ */
+const MAX_AMOUNT = 1000000000;
+const MAX_YEARS = 50;
+const ROWS_PER_PAGE = 12;
+
+const DEFAULTS = {
+  price: "6000000",
+  valuation: "",
+  valuationLinked: true,
+  ltv: "70",
+  loan: "",
+  driver: "ltv", // 'ltv' | 'amount'
+  years: "30",
+  mode: "direct", // 'direct' | 'hibor' | 'prime'
+  directRate: "3.5",
+  hibor: "3",
+  spread: "1.3",
+  capOn: true,
+  prime: "5.25",
+  capReduction: "1.75",
+  primeReduction: "1.75",
+  income: "",
+  debt: "",
+  stamp: "0",
+  legal: "0",
+  agent: "0",
+  other: "0",
+  premium: "0",
+  premiumMode: "cash", // 'cash' | 'financed'
+};
+
+/* ------------------------------------------------------------------ */
+/* 工具函數                                                              */
+/* ------------------------------------------------------------------ */
+const nf0 = new Intl.NumberFormat("en-HK", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("en-HK", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function hkd(v, d = 0) {
+  if (!Number.isFinite(v)) return "—";
+  let x = v;
+  if (Math.abs(x) < (d ? 0.005 : 0.5)) x = 0;
+  return `HK$ ${(d ? nf2 : nf0).format(x)}`;
+}
+function pct(v, d = 1) {
+  return Number.isFinite(v) ? `${v.toFixed(d)}%` : "—";
+}
+function rateText(v) {
+  return Number.isFinite(v) ? `${v.toFixed(3).replace(/\.?0+$/, "")}%` : "—";
+}
+function trim(v) {
+  return String(Math.round(v * 1000) / 1000);
+}
+function round2(v) {
+  return Math.round(v * 100) / 100;
+}
+function compact(v) {
+  if (v >= 100000000) return `${(v / 100000000).toFixed(1)}億`;
+  if (v >= 10000) return `${Math.round(v / 10000)}萬`;
+  return `${Math.round(v)}`;
+}
+function clamp(v, lo, hi) {
+  return Math.min(Math.max(v, lo), hi);
+}
+function num(s) {
+  if (s === "" || s === null || s === undefined) return null;
+  const v = Number(s);
+  return Number.isFinite(v) ? v : NaN;
+}
+function amountError(v, { required = false, allowZero = true } = {}) {
+  if (v === null) return required ? "此欄必須填寫" : null;
+  if (!Number.isFinite(v)) return "請輸入有效數字";
+  if (v < 0) return "金額不可為負數";
+  if (v === 0 && !allowZero) return "金額必須大於 0";
+  if (v > MAX_AMOUNT) return `數值過大（上限 ${hkd(MAX_AMOUNT)}）`;
+  return null;
+}
+function pctError(v, { required = true, max = 30 } = {}) {
+  if (v === null) return required ? "此欄必須填寫" : null;
+  if (!Number.isFinite(v)) return "請輸入有效數字";
+  if (v < 0) return "不可為負數";
+  if (v > max) return `不可超過 ${max}%`;
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* 核心計算：每月等額供款，逐月還款表                                       */
+/* ------------------------------------------------------------------ */
+function buildSchedule(principal, annualRatePct, years) {
+  const n = Math.round(years * 12);
+  const r = annualRatePct / 100 / 12;
+  let monthly;
+  if (r === 0) {
+    monthly = principal / n;
+  } else {
+    const g = Math.pow(1 + r, n);
+    monthly = (principal * r * g) / (g - 1);
+  }
+  const rows = [];
+  let bal = principal;
+  let cumInterest = 0;
+  let totalInterest = 0;
+  let totalPayment = 0;
+  for (let k = 1; k <= n; k++) {
+    const interest = bal * r;
+    let prin;
+    if (k === n) {
+      prin = bal; // 最後一期：清償全部餘額
+    } else {
+      prin = Math.min(monthly - interest, bal);
+      if (prin < 0) prin = 0;
+    }
+    const payment = prin + interest;
+    bal = k === n ? 0 : Math.max(bal - prin, 0);
+    cumInterest += interest;
+    totalInterest += interest;
+    totalPayment += payment;
+    rows.push({
+      k,
+      year: Math.ceil(k / 12),
+      payment,
+      interest,
+      principal: prin,
+      balance: bal,
+      cumInterest,
+    });
+  }
+  return {
+    n,
+    monthly,
+    rows,
+    totalInterest,
+    totalPayment,
+    lastPayment: rows.length ? rows[rows.length - 1].payment : 0,
+  };
+}
+
+function computeModel(f) {
+  const e = {};
+
+  /* --- 成交價、估值、估算基準 --- */
+  const price = num(f.price);
+  const priceErr = amountError(price, { required: true, allowZero: false });
+  if (priceErr) e.price = priceErr;
+
+  let valuation = price;
+  if (!f.valuationLinked && f.valuation !== "") {
+    const v = num(f.valuation);
+    const err = amountError(v, { allowZero: false });
+    if (err) e.valuation = err;
+    else valuation = v;
+  }
+  const baseOk = !e.price && !e.valuation && price > 0 && valuation > 0;
+  const base = baseOk ? Math.min(price, valuation) : null;
+
+  /* --- 貸款金額與成數 --- */
+  let loan = null;
+  let ltvDisplay = f.ltv;
+  let loanDisplay = f.loan;
+  if (baseOk) {
+    if (f.driver === "ltv") {
+      const l = num(f.ltv);
+      if (l === null) e.ltv = "請輸入按揭成數";
+      else if (!Number.isFinite(l)) e.ltv = "請輸入有效數字";
+      else if (l <= 0) e.ltv = "按揭成數必須大於 0%";
+      else if (l > 100) e.ltv = "按揭成數不可超過 100%（貸款不可超過估算基準）";
+      else loan = round2((base * l) / 100);
+      loanDisplay = l !== null && Number.isFinite(l) ? String(round2((base * l) / 100)) : "";
+    } else {
+      const a = num(f.loan);
+      if (a === null) e.loan = "請輸入貸款金額";
+      else if (!Number.isFinite(a)) e.loan = "請輸入有效數字";
+      else if (a <= 0) e.loan = "貸款金額必須大於 0";
+      else if (a > base)
+        e.loan = `貸款金額超過估算基準 ${hkd(base)}，請調低貸款金額或檢查成交價／估值`;
+      else loan = a;
+      ltvDisplay = a !== null && Number.isFinite(a) && a >= 0 ? String(round2((a / base) * 100)) : "";
+    }
+  }
+
+  /* --- 年期 --- */
+  const yrs = num(f.years);
+  if (yrs === null) e.years = "請輸入按揭年期";
+  else if (!Number.isFinite(yrs)) e.years = "請輸入有效數字";
+  else if (!Number.isInteger(yrs)) e.years = "年期請輸入整數年";
+  else if (yrs < 1 || yrs > MAX_YEARS)
+    e.years = `年期須介乎 1 至 ${MAX_YEARS} 年（此為輸入範圍，實際可承造年期由銀行決定）`;
+
+  /* --- 利率 --- */
+  let rate = null;
+  let rateFormula = "";
+  let capApplied = false;
+  if (f.mode === "direct") {
+    const v = num(f.directRate);
+    const err = pctError(v);
+    if (err) e.directRate = err;
+    else {
+      rate = v;
+      rateFormula = `年利率 = ${rateText(v)}（用戶直接輸入）`;
+    }
+  } else if (f.mode === "hibor") {
+    const h = num(f.hibor);
+    const s = num(f.spread);
+    const eh = pctError(h);
+    const es = pctError(s);
+    if (eh) e.hibor = eh;
+    if (es) e.spread = es;
+    let capRate = null;
+    let capOk = true;
+    if (f.capOn) {
+      const p = num(f.prime);
+      const red = num(f.capReduction);
+      const ep = pctError(p);
+      const er = pctError(red);
+      if (ep) e.prime = ep;
+      if (er) e.capReduction = er;
+      capOk = !ep && !er;
+      if (capOk) capRate = p - red;
+    }
+    if (!eh && !es && capOk) {
+      const floating = h + s;
+      if (f.capOn) {
+        rate = Math.min(floating, capRate);
+        capApplied = capRate < floating;
+        rateFormula = `min(HIBOR ${trim(h)}% + 加點 ${trim(s)}%, P ${trim(num(f.prime))}% − 減幅 ${trim(num(f.capReduction))}%) = min(${trim(floating)}%, ${trim(capRate)}%) = ${trim(rate)}%`;
+      } else {
+        rate = floating;
+        rateFormula = `HIBOR ${trim(h)}% + 加點 ${trim(s)}% = ${trim(rate)}%（未設封頂）`;
+      }
+    }
+  } else {
+    const p = num(f.prime);
+    const red = num(f.primeReduction);
+    const ep = pctError(p);
+    const er = pctError(red);
+    if (ep) e.prime = ep;
+    if (er) e.primeReduction = er;
+    if (!ep && !er) {
+      rate = p - red;
+      rateFormula = `P ${trim(p)}% − 減幅 ${trim(red)}% = ${trim(rate)}%`;
+    }
+  }
+  if (rate !== null && rate < 0) {
+    e.rateResult = `按目前輸入算出的年利率為 ${trim(rate)}%（負數），請檢查最優惠利率、減幅或加點等輸入。`;
+    rate = null;
+  }
+
+  /* --- 費用與保費 --- */
+  const feeKeys = ["stamp", "legal", "agent", "other", "premium"];
+  const fees = {};
+  feeKeys.forEach((k) => {
+    const v = num(f[k]);
+    const err = amountError(v);
+    if (err) e[k] = err;
+    fees[k] = v === null || err ? 0 : v;
+  });
+
+  /* --- 收入與債務（選填，不阻擋計算） --- */
+  const incomeRaw = num(f.income);
+  const debtRaw = num(f.debt);
+  const incomeErr = amountError(incomeRaw);
+  const debtErr = amountError(debtRaw);
+  const warnings = {};
+  if (incomeErr) warnings.income = incomeErr;
+  if (debtErr) warnings.debt = debtErr;
+  const income = incomeRaw !== null && !incomeErr ? incomeRaw : null;
+  const debt = debtRaw !== null && !debtErr ? debtRaw : 0;
+
+  const blocking = Object.keys(e).length > 0 || loan === null || rate === null;
+  const common = {
+    errors: e,
+    warnings,
+    price,
+    valuation,
+    base,
+    ltvDisplay,
+    loanDisplay,
+    rate,
+    rateFormula,
+    capApplied,
+  };
+  if (blocking) return { ...common, ok: false };
+
+  /* --- 結果 --- */
+  const financedPremium = f.premiumMode === "financed" ? fees.premium : 0;
+  const cashPremium = f.premiumMode === "cash" ? fees.premium : 0;
+  const principal = loan + financedPremium;
+  const down = price - loan;
+  const otherCash = fees.stamp + fees.legal + fees.agent + fees.other;
+  const cashNeed = down + otherCash + cashPremium;
+
+  const sched = buildSchedule(principal, rate, yrs);
+
+  const dsrOf = (monthly) =>
+    income !== null && income > 0 ? ((monthly + debt) / income) * 100 : null;
+
+  const scenarios = [0, 1, 2].map((add) => {
+    const r = rate + add;
+    const s = add === 0 ? sched : buildSchedule(principal, r, yrs);
+    return {
+      label: add === 0 ? "目前利率" : `目前利率 +${add} 個百分點`,
+      rate: r,
+      monthly: s.monthly,
+      increase: s.monthly - sched.monthly,
+      totalInterest: s.totalInterest,
+      dsr: dsrOf(s.monthly),
+    };
+  });
+
+  // 年度彙總
+  const annual = [];
+  const balanceData = [{ year: 0, balance: principal }];
+  for (let y = 1; y <= yrs; y++) {
+    const slice = sched.rows.slice((y - 1) * 12, y * 12);
+    annual.push({
+      year: y,
+      principal: slice.reduce((a, r) => a + r.principal, 0),
+      interest: slice.reduce((a, r) => a + r.interest, 0),
+    });
+    balanceData.push({ year: y, balance: slice[slice.length - 1].balance });
+  }
+
+  return {
+    ...common,
+    ok: true,
+    years: yrs,
+    loan,
+    ltvBase: (loan / base) * 100,
+    ltvPrice: (loan / price) * 100,
+    fees,
+    financedPremium,
+    cashPremium,
+    otherCash,
+    principal,
+    down,
+    cashNeed,
+    sched,
+    scenarios,
+    annual,
+    balanceData,
+    income,
+    debt,
+    dsr: dsrOf(sched.monthly),
+  };
+}
+
+function downloadCsv(rows) {
+  const header = [
+    "期數",
+    "年度",
+    "月供 (HKD)",
+    "當月利息 (HKD)",
+    "當月本金 (HKD)",
+    "剩餘本金 (HKD)",
+    "累計利息 (HKD)",
+  ];
+  const lines = [header.join(",")];
+  rows.forEach((r) => {
+    lines.push(
+      [
+        r.k,
+        r.year,
+        r.payment.toFixed(2),
+        r.interest.toFixed(2),
+        r.principal.toFixed(2),
+        r.balance.toFixed(2),
+        r.cumInterest.toFixed(2),
+      ].join(",")
+    );
+  });
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "hk-mortgage-schedule.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ------------------------------------------------------------------ */
+/* 小型 UI 元件                                                         */
+/* ------------------------------------------------------------------ */
+function Panel({ icon: Icon, title, children, action }) {
+  return (
+    _react2.default.createElement('section', { className: "rounded-xl border border-slate-200 bg-white shadow-sm"    ,}
+      , _react2.default.createElement('div', { className: "flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5"        ,}
+        , _react2.default.createElement('h2', { className: "flex items-center gap-2 text-base font-semibold text-blue-900"     ,}
+          , Icon && _react2.default.createElement(Icon, { className: "h-5 w-5" , 'aria-hidden': "true",} )
+          , title
+        )
+        , action
+      )
+      , _react2.default.createElement('div', { className: "space-y-4 p-4 sm:p-5"  ,}, children)
+    )
+  );
+}
+
+function Field({
+  id,
+  label,
+  optional,
+  prefix,
+  suffix,
+  error,
+  warning,
+  hint,
+  preview,
+  value,
+  onChange,
+  step = "any",
+  min,
+}) {
+  const msg = error || warning;
+  const describedBy = [msg ? `${id}-err` : null, hint ? `${id}-hint` : null]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    _react2.default.createElement('div', null
+      , _react2.default.createElement('label', { htmlFor: id, className: "mb-1 block text-sm font-medium text-slate-700"    ,}
+        , label
+        , optional && _react2.default.createElement('span', { className: "ml-1 text-xs font-normal text-slate-500"   ,}, "（選填）")
+      )
+      , _react2.default.createElement('div', {
+        className: `flex items-center rounded-lg border bg-white focus-within:ring-2 ${
+          msg
+            ? "border-red-500 focus-within:ring-red-200"
+            : "border-slate-300 focus-within:border-blue-700 focus-within:ring-blue-200"
+        }`,}
+
+        , prefix && _react2.default.createElement('span', { className: "pl-3 text-sm text-slate-500"  ,}, prefix)
+        , _react2.default.createElement('input', {
+          id: id,
+          type: "number",
+          inputMode: "decimal",
+          step: step,
+          min: min,
+          value: value,
+          onChange: (ev) => onChange(ev.target.value),
+          'aria-invalid': error ? "true" : "false",
+          'aria-describedby': describedBy || undefined,
+          className: "w-full min-w-0 bg-transparent px-3 py-2 text-slate-900 tabular-nums focus:outline-none"       ,}
+        )
+        , suffix && _react2.default.createElement('span', { className: "whitespace-nowrap pr-3 text-sm text-slate-500"   ,}, suffix)
+      )
+      , msg && (
+        _react2.default.createElement('p', {
+          id: `${id}-err`,
+          role: "alert",
+          className: `mt-1 flex items-start gap-1 text-sm ${error ? "text-red-600" : "text-amber-700"}`,}
+
+          , _react2.default.createElement(_lucidereact.AlertCircle, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+          , _react2.default.createElement('span', null, msg)
+        )
+      )
+      , preview && !msg && _react2.default.createElement('p', { className: "mt-1 text-xs font-medium text-blue-800"   ,}, preview)
+      , hint && (
+        _react2.default.createElement('p', { id: `${id}-hint`, className: "mt-1 text-xs text-slate-500"  ,}
+          , hint
+        )
+      )
+    )
+  );
+}
+
+function Slider({ label, value, min, max, step, onChange, minLabel, maxLabel }) {
+  return (
+    _react2.default.createElement('div', null
+      , _react2.default.createElement('input', {
+        type: "range",
+        'aria-label': label,
+        min: min,
+        max: max,
+        step: step,
+        value: value,
+        onChange: (ev) => onChange(Number(ev.target.value)),
+        className: "w-full cursor-pointer accent-blue-900"  ,}
+      )
+      , _react2.default.createElement('div', { className: "flex justify-between text-xs text-slate-400"   ,}
+        , _react2.default.createElement('span', null, minLabel)
+        , _react2.default.createElement('span', null, maxLabel)
+      )
+    )
+  );
+}
+
+function Segmented({ name, legend, value, options, onChange }) {
+  return (
+    _react2.default.createElement('fieldset', null
+      , _react2.default.createElement('legend', { className: "mb-1 text-sm font-medium text-slate-700"   ,}, legend)
+      , _react2.default.createElement('div', { className: "flex gap-2" ,}
+        , options.map((o) => (
+          _react2.default.createElement('label', { key: o.value, className: "relative flex-1 cursor-pointer"  ,}
+            , _react2.default.createElement('input', {
+              type: "radio",
+              name: name,
+              value: o.value,
+              checked: value === o.value,
+              onChange: () => onChange(o.value),
+              className: "peer sr-only" ,}
+            )
+            , _react2.default.createElement('span', { className: "block rounded-lg border border-slate-300 bg-white px-2 py-2 text-center text-sm font-medium text-slate-700 peer-checked:border-blue-900 peer-checked:bg-blue-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2"                ,}
+              , o.label
+            )
+          )
+        ))
+      )
+    )
+  );
+}
+
+function StatCard({ icon: Icon, label, value, sub, primary }) {
+  return (
+    _react2.default.createElement('div', {
+      className: `rounded-xl border p-4 shadow-sm ${
+        primary ? "border-blue-900 bg-blue-900 text-white" : "border-slate-200 bg-white text-slate-900"
+      }`,}
+
+      , _react2.default.createElement('div', {
+        className: `flex items-center gap-2 text-sm ${primary ? "text-blue-100" : "text-slate-500"}`,}
+
+        , _react2.default.createElement(Icon, { className: "h-4 w-4" , 'aria-hidden': "true",} )
+        , label
+      )
+      , _react2.default.createElement('div', { className: "mt-2 break-words text-2xl font-bold tabular-nums"    ,}, value)
+      , _react2.default.createElement('div', { className: `mt-1 text-xs ${primary ? "text-blue-200" : "text-slate-500"}`,}, sub)
+    )
+  );
+}
+
+function Row({ label, value, note, strong }) {
+  return (
+    _react2.default.createElement('div', { className: "flex items-start justify-between gap-4 py-2"    ,}
+      , _react2.default.createElement('dt', { className: "text-sm text-slate-600" ,}
+        , label
+        , note && _react2.default.createElement('span', { className: "block text-xs text-slate-400"  ,}, note)
+      )
+      , _react2.default.createElement('dd', {
+        className: `text-right text-sm tabular-nums ${
+          strong ? "font-bold text-blue-900" : "font-medium text-slate-900"
+        }`,}
+
+        , value
+      )
+    )
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* 主元件                                                               */
+/* ------------------------------------------------------------------ */
+ function HKMortgageCalculator() {
+  const [f, setF] = _react.useState.call(void 0, DEFAULTS);
+  const [feesOpen, setFeesOpen] = _react.useState.call(void 0, false);
+  const [tableYear, setTableYear] = _react.useState.call(void 0, 1);
+
+  const set = _react.useCallback.call(void 0, (k, v) => setF((p) => ({ ...p, [k]: v })), []);
+  const patch = _react.useCallback.call(void 0, (o) => setF((p) => ({ ...p, ...o })), []);
+  const m = _react.useMemo.call(void 0, () => computeModel(f), [f]);
+  const err = m.errors;
+
+  const reset = () => {
+    setF(DEFAULTS);
+    setTableYear(1);
+  };
+
+  const valuationShown = f.valuationLinked ? f.price : f.valuation;
+  const priceNum = num(f.price);
+  const loanSliderMax = m.base && m.base > 0 ? m.base : 10000000;
+  const loanShownNum = num(m.loanDisplay);
+  const ltvShownNum = num(m.ltvDisplay);
+
+  const maxYear = m.ok ? m.years : 1;
+  const safeYear = clamp(tableYear, 1, maxYear);
+  const yearRows = m.ok
+    ? m.sched.rows.slice((safeYear - 1) * ROWS_PER_PAGE, safeYear * ROWS_PER_PAGE)
+    : [];
+  const yearSum = yearRows.reduce(
+    (a, r) => ({
+      payment: a.payment + r.payment,
+      interest: a.interest + r.interest,
+      principal: a.principal + r.principal,
+    }),
+    { payment: 0, interest: 0, principal: 0 }
+  );
+
+  const sourceGroups = ["regulation", "insurance", "tax", "bank"];
+
+  return (
+    _react2.default.createElement('div', { className: "min-h-screen bg-slate-50 text-slate-800"  ,}
+      /* 頁首 */
+      , _react2.default.createElement('header', { className: "bg-blue-900 text-white" ,}
+        , _react2.default.createElement('div', { className: "mx-auto max-w-7xl px-4 py-6 sm:px-6"    ,}
+          , _react2.default.createElement('div', { className: "flex items-center gap-3"  ,}
+            , _react2.default.createElement('div', { className: "rounded-lg bg-blue-800 p-2"  ,}
+              , _react2.default.createElement(_lucidereact.Home, { className: "h-6 w-6" , 'aria-hidden': "true",} )
+            )
+            , _react2.default.createElement('div', null
+              , _react2.default.createElement('h1', { className: "text-xl font-bold sm:text-2xl"  ,}, "香港住宅按揭計算器")
+              , _react2.default.createElement('p', { className: "text-sm text-blue-100" ,}, "即時估算每月供款、首期、總利息及初始現金需求（金額單位：港元 HKD）"
+
+              )
+            )
+          )
+          , _react2.default.createElement('div', { className: "mt-4 flex items-start gap-2 rounded-lg bg-blue-800 px-3 py-2 text-sm text-blue-50"         ,}
+            , _react2.default.createElement(_lucidereact.ShieldAlert, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+            , _react2.default.createElement('p', null
+              , _react2.default.createElement('strong', null, POLICY_CONFIG.status), "。預設數值只是示範參數，並非最新政策上限、實時報價或推薦利率。所有利率均由用戶輸入，本工具不提供實時銀行報價，亦不判斷貸款資格。"
+
+            )
+          )
+        )
+      )
+
+      , _react2.default.createElement('main', { className: "mx-auto max-w-7xl px-4 py-6 sm:px-6"    ,}
+        , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-6 lg:grid-cols-12"   ,}
+          /* ============ 左側：輸入區 ============ */
+          , _react2.default.createElement('div', { className: "space-y-6 lg:col-span-5" ,}
+            , _react2.default.createElement(Panel, {
+              icon: _lucidereact.Calculator,
+              title: "物業及貸款",
+              action: 
+                _react2.default.createElement('button', {
+                  type: "button",
+                  onClick: reset,
+                  className: "inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"              ,}
+
+                  , _react2.default.createElement(_lucidereact.RotateCcw, { className: "h-4 w-4" , 'aria-hidden': "true",} ), "恢復示例"
+
+                )
+              ,}
+
+              , _react2.default.createElement(Field, {
+                id: "price",
+                label: "物業成交價",
+                prefix: "HK$",
+                value: f.price,
+                onChange: (v) => set("price", v),
+                error: err.price,
+                preview: Number.isFinite(priceNum) && priceNum > 0 ? hkd(priceNum) : null,
+                min: "0",
+                step: "10000",}
+              )
+              , _react2.default.createElement(Slider, {
+                label: "物業成交價滑桿",
+                min: 1000000,
+                max: 30000000,
+                step: 100000,
+                value: clamp(Number.isFinite(priceNum) ? priceNum : 1000000, 1000000, 30000000),
+                onChange: (v) => set("price", String(v)),
+                minLabel: "100 萬" ,
+                maxLabel: "3,000 萬" ,}
+              )
+
+              , _react2.default.createElement('div', null
+                , _react2.default.createElement(Field, {
+                  id: "valuation",
+                  label: "銀行估值",
+                  optional: true,
+                  prefix: "HK$",
+                  value: valuationShown,
+                  onChange: (v) => patch({ valuation: v, valuationLinked: false }),
+                  error: err.valuation,
+                  hint: 
+                    f.valuationLinked || f.valuation === ""
+                      ? "目前與成交價相同；估值由銀行決定，可能低於成交價。"
+                      : "留空即使用成交價。"
+                  ,
+                  min: "0",
+                  step: "10000",}
+                )
+                , !f.valuationLinked && (
+                  _react2.default.createElement('button', {
+                    type: "button",
+                    onClick: () => patch({ valuationLinked: true, valuation: "" }),
+                    className: "mt-1 text-xs font-medium text-blue-800 underline hover:text-blue-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"        ,}
+, "恢復為「與成交價相同」"
+
+                  )
+                )
+              )
+
+              , m.base && (
+                _react2.default.createElement('div', { className: "flex items-start gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-900"        ,}
+                  , _react2.default.createElement(_lucidereact.Info, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+                  , _react2.default.createElement('p', null, "估算基準 = 成交價與銀行估值"
+                      , _react2.default.createElement('strong', null, "較低者"), "：", hkd(m.base), "。實際貸款金額以銀行審批為準。"
+                  )
+                )
+              )
+              , m.base && m.valuation < m.price && (
+                _react2.default.createElement('div', { className: "flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"        ,}
+                  , _react2.default.createElement(_lucidereact.AlertTriangle, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+                  , _react2.default.createElement('p', null, "估值低於成交價 "
+                     , hkd(m.price - m.valuation), "。差額須自行以現金補足，已計入首期及初始現金需求。"
+                  )
+                )
+              )
+
+              , _react2.default.createElement(Field, {
+                id: "ltv",
+                label: "按揭成數（貸款佔估算基準）",
+                suffix: "%",
+                value: m.ltvDisplay,
+                onChange: (v) => patch({ ltv: v, driver: "ltv" }),
+                error: err.ltv,
+                hint: "輸入範圍不代表可獲批範圍；可承造成數須以銀行及相關規定為準。",
+                min: "0",
+                step: "1",}
+              )
+              , _react2.default.createElement(Slider, {
+                label: "按揭成數滑桿",
+                min: 0,
+                max: 100,
+                step: 1,
+                value: clamp(Number.isFinite(ltvShownNum) ? ltvShownNum : 0, 0, 100),
+                onChange: (v) => patch({ ltv: String(v), driver: "ltv" }),
+                minLabel: "0%",
+                maxLabel: "100%",}
+              )
+
+              , _react2.default.createElement(Field, {
+                id: "loan",
+                label: "用於支付樓價的貸款金額",
+                prefix: "HK$",
+                value: m.loanDisplay,
+                onChange: (v) => patch({ loan: v, driver: "amount" }),
+                error: err.loan,
+                preview: Number.isFinite(loanShownNum) && loanShownNum > 0 ? hkd(loanShownNum) : null,
+                hint: "與按揭成數雙向聯動，修改任一項，另一項會自動更新。",
+                min: "0",
+                step: "10000",}
+              )
+              , _react2.default.createElement(Slider, {
+                label: "貸款金額滑桿",
+                min: 0,
+                max: loanSliderMax,
+                step: 10000,
+                value: clamp(Number.isFinite(loanShownNum) ? loanShownNum : 0, 0, loanSliderMax),
+                onChange: (v) => patch({ loan: String(v), driver: "amount" }),
+                minLabel: "HK$ 0" ,
+                maxLabel: hkd(loanSliderMax),}
+              )
+
+              , _react2.default.createElement(Field, {
+                id: "years",
+                label: "按揭年期",
+                suffix: "年",
+                value: f.years,
+                onChange: (v) => set("years", v),
+                error: err.years,
+                hint: "實際可承造年期由銀行按個案決定。",
+                min: "1",
+                step: "1",}
+              )
+              , _react2.default.createElement(Slider, {
+                label: "按揭年期滑桿",
+                min: 1,
+                max: MAX_YEARS,
+                step: 1,
+                value: clamp(Number.isFinite(num(f.years)) ? num(f.years) : 1, 1, MAX_YEARS),
+                onChange: (v) => set("years", String(v)),
+                minLabel: "1 年" ,
+                maxLabel: `${MAX_YEARS} 年`,}
+              )
+            )
+
+            , _react2.default.createElement(Panel, { icon: _lucidereact.Percent, title: "利率",}
+              , _react2.default.createElement(Segmented, {
+                name: "mode",
+                legend: "利率模式",
+                value: f.mode,
+                onChange: (v) => set("mode", v),
+                options: [
+                  { value: "direct", label: "直接輸入" },
+                  { value: "hibor", label: "H 按" },
+                  { value: "prime", label: "P 按" },
+                ],}
+              )
+
+              , f.mode === "direct" && (
+                _react2.default.createElement(_react2.default.Fragment, null
+                  , _react2.default.createElement(Field, {
+                    id: "directRate",
+                    label: "按揭年利率",
+                    suffix: "% 每年" ,
+                    value: f.directRate,
+                    onChange: (v) => set("directRate", v),
+                    error: err.directRate,
+                    hint: "示範參數，非實時報價，亦非推薦利率。可輸入 0 作零利率計算。"  ,
+                    min: "0",
+                    step: "0.05",}
+                  )
+                  , _react2.default.createElement(Slider, {
+                    label: "按揭年利率滑桿",
+                    min: 0,
+                    max: 10,
+                    step: 0.05,
+                    value: clamp(Number.isFinite(num(f.directRate)) ? num(f.directRate) : 0, 0, 10),
+                    onChange: (v) => set("directRate", String(Math.round(v * 100) / 100)),
+                    minLabel: "0%",
+                    maxLabel: "10%",}
+                  )
+                )
+              )
+
+              , f.mode === "hibor" && (
+                _react2.default.createElement('div', { className: "space-y-4",}
+                  , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-4 sm:grid-cols-2"   ,}
+                    , _react2.default.createElement(Field, {
+                      id: "hibor",
+                      label: "合約指定的 HIBOR" ,
+                      suffix: "%",
+                      value: f.hibor,
+                      onChange: (v) => set("hibor", v),
+                      error: err.hibor,
+                      hint: "以合約指定期限及報價來源為準。",
+                      min: "0",
+                      step: "0.01",}
+                    )
+                    , _react2.default.createElement(Field, {
+                      id: "spread",
+                      label: "銀行加點",
+                      suffix: "百分點",
+                      value: f.spread,
+                      onChange: (v) => set("spread", v),
+                      error: err.spread,
+                      min: "0",
+                      step: "0.05",}
+                    )
+                  )
+                  , _react2.default.createElement('label', { className: "flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700"      ,}
+                    , _react2.default.createElement('input', {
+                      type: "checkbox",
+                      checked: f.capOn,
+                      onChange: (ev) => set("capOn", ev.target.checked),
+                      className: "h-4 w-4 rounded border-slate-300 accent-blue-900"    ,}
+                    ), "啟用封頂利率（P − 減幅）"
+
+                  )
+                  , f.capOn && (
+                    _react2.default.createElement('div', { className: "grid grid-cols-1 gap-4 sm:grid-cols-2"   ,}
+                      , _react2.default.createElement(Field, {
+                        id: "prime",
+                        label: "該銀行最優惠利率 P" ,
+                        suffix: "%",
+                        value: f.prime,
+                        onChange: (v) => set("prime", v),
+                        error: err.prime,
+                        min: "0",
+                        step: "0.125",}
+                      )
+                      , _react2.default.createElement(Field, {
+                        id: "capReduction",
+                        label: "封頂利率減幅",
+                        suffix: "百分點",
+                        value: f.capReduction,
+                        onChange: (v) => set("capReduction", v),
+                        error: err.capReduction,
+                        min: "0",
+                        step: "0.05",}
+                      )
+                    )
+                  )
+                )
+              )
+
+              , f.mode === "prime" && (
+                _react2.default.createElement('div', { className: "grid grid-cols-1 gap-4 sm:grid-cols-2"   ,}
+                  , _react2.default.createElement(Field, {
+                    id: "prime",
+                    label: "該銀行最優惠利率 P" ,
+                    suffix: "%",
+                    value: f.prime,
+                    onChange: (v) => set("prime", v),
+                    error: err.prime,
+                    min: "0",
+                    step: "0.125",}
+                  )
+                  , _react2.default.createElement(Field, {
+                    id: "primeReduction",
+                    label: "P 按減幅" ,
+                    suffix: "百分點",
+                    value: f.primeReduction,
+                    onChange: (v) => set("primeReduction", v),
+                    error: err.primeReduction,
+                    min: "0",
+                    step: "0.05",}
+                  )
+                )
+              )
+
+              , f.mode !== "direct" && (
+                _react2.default.createElement('div', { className: "flex items-start gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-600"        ,}
+                  , _react2.default.createElement(_lucidereact.Info, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+                  , _react2.default.createElement('p', null, "不同銀行的最優惠利率、HIBOR 報價來源（如期限、釐定日）及合約條款可能不同；以下結果為估算，並以合約為準。"
+
+                  )
+                )
+              )
+
+              , _react2.default.createElement('div', {
+                className: `rounded-lg border px-3 py-3 ${
+                  err.rateResult ? "border-red-300 bg-red-50" : "border-blue-200 bg-blue-50"
+                }`,}
+
+                , err.rateResult ? (
+                  _react2.default.createElement('p', { role: "alert", className: "flex items-start gap-2 text-sm text-red-700"    ,}
+                    , _react2.default.createElement(_lucidereact.AlertCircle, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+                    , _react2.default.createElement('span', null, err.rateResult)
+                  )
+                ) : m.rate !== null ? (
+                  _react2.default.createElement(_react2.default.Fragment, null
+                    , _react2.default.createElement('p', { className: "text-xs text-blue-800" ,}, "估算年利率（假設全期不變）")
+                    , _react2.default.createElement('p', { className: "text-xl font-bold text-blue-900 tabular-nums"   ,}, rateText(m.rate))
+                    , _react2.default.createElement('p', { className: "mt-1 break-words text-xs text-slate-600"   ,}, m.rateFormula)
+                    , f.mode === "hibor" && f.capOn && (
+                      _react2.default.createElement('p', { className: "mt-1 text-xs text-slate-600"  ,}
+                        , m.capApplied ? "目前以封頂利率計算。" : "目前浮動利率未觸及封頂。"
+                      )
+                    )
+                  )
+                ) : (
+                  _react2.default.createElement('p', { className: "text-sm text-slate-600" ,}, "請先修正上方利率輸入。")
+                )
+              )
+            )
+
+            , _react2.default.createElement(Panel, { icon: _lucidereact.Wallet, title: "收入與債務（選填）",}
+              , _react2.default.createElement(Field, {
+                id: "income",
+                label: "每月收入",
+                optional: true,
+                prefix: "HK$",
+                value: f.income,
+                onChange: (v) => set("income", v),
+                warning: m.warnings.income,
+                hint: "用於估算供款與入息比率 (DSR)。" ,
+                min: "0",
+                step: "1000",}
+              )
+              , _react2.default.createElement(Field, {
+                id: "debt",
+                label: "其他每月債務供款",
+                optional: true,
+                prefix: "HK$",
+                value: f.debt,
+                onChange: (v) => set("debt", v),
+                warning: m.warnings.debt,
+                hint: "例如信用卡、私人貸款、其他按揭的每月還款。",
+                min: "0",
+                step: "500",}
+              )
+            )
+
+            , _react2.default.createElement('section', { className: "rounded-xl border border-slate-200 bg-white shadow-sm"    ,}
+              , _react2.default.createElement('h2', null
+                , _react2.default.createElement('button', {
+                  type: "button",
+                  onClick: () => setFeesOpen((o) => !o),
+                  'aria-expanded': feesOpen,
+                  'aria-controls': "fees-panel",
+                  className: "flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-base font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:px-5"              ,}
+
+                  , _react2.default.createElement('span', { className: "flex items-center gap-2"  ,}
+                    , _react2.default.createElement(_lucidereact.Receipt, { className: "h-5 w-5" , 'aria-hidden': "true",} ), "置業費用及按揭保險（手動填寫）"
+
+                  )
+                  , feesOpen ? (
+                    _react2.default.createElement(_lucidereact.ChevronUp, { className: "h-5 w-5" , 'aria-hidden': "true",} )
+                  ) : (
+                    _react2.default.createElement(_lucidereact.ChevronDown, { className: "h-5 w-5" , 'aria-hidden': "true",} )
+                  )
+                )
+              )
+              , feesOpen && (
+                _react2.default.createElement('div', { id: "fees-panel", className: "space-y-4 border-t border-slate-100 p-4 sm:p-5"    ,}
+                  , _react2.default.createElement('div', { className: "flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"        ,}
+                    , _react2.default.createElement(_lucidereact.AlertTriangle, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+                    , _react2.default.createElement('p', null, "印花稅稅率及豁免尚未核驗，本工具不自動計算印花稅或按揭保費，請按官方資料及專業意見自行填寫。"
+
+                    )
+                  )
+                  , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-4 sm:grid-cols-2"   ,}
+                    , _react2.default.createElement(Field, { id: "stamp", label: "印花稅", prefix: "HK$", value: f.stamp, onChange: (v) => set("stamp", v), error: err.stamp, min: "0", step: "1000",} )
+                    , _react2.default.createElement(Field, { id: "legal", label: "律師費", prefix: "HK$", value: f.legal, onChange: (v) => set("legal", v), error: err.legal, min: "0", step: "1000",} )
+                    , _react2.default.createElement(Field, { id: "agent", label: "代理佣金", prefix: "HK$", value: f.agent, onChange: (v) => set("agent", v), error: err.agent, min: "0", step: "1000",} )
+                    , _react2.default.createElement(Field, { id: "other", label: "其他費用", prefix: "HK$", value: f.other, onChange: (v) => set("other", v), error: err.other, min: "0", step: "1000",} )
+                  )
+                  , _react2.default.createElement(Field, {
+                    id: "premium",
+                    label: "按揭保險保費",
+                    prefix: "HK$",
+                    value: f.premium,
+                    onChange: (v) => set("premium", v),
+                    error: err.premium,
+                    hint: "不自動判斷保險資格，亦不自動計算保費。請填寫銀行或保險機構提供的金額。",
+                    min: "0",
+                    step: "1000",}
+                  )
+                  , _react2.default.createElement(Segmented, {
+                    name: "premiumMode",
+                    legend: "保費支付方式",
+                    value: f.premiumMode,
+                    onChange: (v) => set("premiumMode", v),
+                    options: [
+                      { value: "cash", label: "現金一次性支付" },
+                      { value: "financed", label: "加入貸款本金" },
+                    ],}
+                  )
+                  , f.premiumMode === "financed" && (
+                    _react2.default.createElement('div', { className: "flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"        ,}
+                      , _react2.default.createElement(_lucidereact.AlertTriangle, { className: "mt-0.5 h-4 w-4 shrink-0"   , 'aria-hidden': "true",} )
+                      , _react2.default.createElement('p', null, "保費加入貸款本金須獲銀行及保險機構批准。融資後本金增加，會提高月供及總利息；已融資的保費不再計入初始現金需求。"
+
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+
+          /* ============ 右側：結果區 ============ */
+          , _react2.default.createElement('div', { className: "space-y-6 lg:col-span-7" , 'aria-live': "polite",}
+            , !m.ok && (
+              _react2.default.createElement('div', { className: "rounded-xl border border-red-200 bg-red-50 p-5 text-red-700"     ,}
+                , _react2.default.createElement('p', { className: "flex items-center gap-2 font-semibold"   ,}
+                  , _react2.default.createElement(_lucidereact.AlertCircle, { className: "h-5 w-5" , 'aria-hidden': "true",} ), "暫時無法計算"
+
+                )
+                , _react2.default.createElement('p', { className: "mt-1 text-sm" ,}, "請先修正左側標示的輸入問題（紅色提示）。結果會在輸入有效後即時更新。"
+
+                )
+              )
+            )
+
+            , m.ok && (
+              _react2.default.createElement(_react2.default.Fragment, null
+                , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-4 sm:grid-cols-2"   ,}
+                  , _react2.default.createElement(StatCard, {
+                    primary: true,
+                    icon: _lucidereact.Wallet,
+                    label: "每月供款",
+                    value: hkd(m.sched.monthly),
+                    sub: `${m.sched.n} 期 · 年利率 ${rateText(m.rate)}（假設不變）`,}
+                  )
+                  , _react2.default.createElement(StatCard, {
+                    icon: _lucidereact.Home,
+                    label: "首期金額",
+                    value: hkd(m.down),
+                    sub: "成交價 − 用於支付樓價的貸款金額"  ,}
+                  )
+                  , _react2.default.createElement(StatCard, {
+                    icon: _lucidereact.TrendingUp,
+                    label: "總利息",
+                    value: hkd(m.sched.totalInterest),
+                    sub: `相當於總貸款本金的 ${pct((m.sched.totalInterest / m.principal) * 100)}`,}
+                  )
+                  , _react2.default.createElement(StatCard, {
+                    icon: _lucidereact.PiggyBank,
+                    label: "預計初始現金需求",
+                    value: hkd(m.cashNeed),
+                    sub: "首期 + 現金支付的費用及保費"  ,}
+                  )
+                )
+
+                , _react2.default.createElement(Panel, { icon: _lucidereact.Landmark, title: "貸款摘要",}
+                  , _react2.default.createElement('dl', { className: "divide-y divide-slate-100" ,}
+                    , _react2.default.createElement(Row, { label: "估算基準（成交價與估值較低者）", value: hkd(m.base),} )
+                    , _react2.default.createElement(Row, {
+                      label: "貸款佔估算基準比例",
+                      value: pct(m.ltvBase, 2),
+                      note: "用於貸款成數估算",}
+                    )
+                    , _react2.default.createElement(Row, {
+                      label: "貸款佔成交價比例",
+                      value: pct(m.ltvPrice, 2),
+                      note: m.valuation < m.price ? "估值不足時會低於按揭成數" : "與上項相同（估值不低於成交價）",}
+                    )
+                    , _react2.default.createElement(Row, { label: "用於支付樓價的貸款金額", value: hkd(m.loan),} )
+                    , _react2.default.createElement(Row, {
+                      label: "融資保費（加入本金）",
+                      value: hkd(m.financedPremium),
+                      note: m.financedPremium > 0 ? "須獲銀行及保險機構批准" : undefined,}
+                    )
+                    , _react2.default.createElement(Row, { label: "包括融資保費後的總貸款本金", value: hkd(m.principal), strong: true,} )
+                    , _react2.default.createElement(Row, { label: "總利息（由還款表彙總）", value: hkd(m.sched.totalInterest),} )
+                    , _react2.default.createElement(Row, { label: "總還款金額", value: hkd(m.sched.totalPayment), strong: true,} )
+                    , _react2.default.createElement(Row, {
+                      label: "最後一期供款",
+                      value: hkd(m.sched.lastPayment, 2),
+                      note: "最後一期會調整以清償餘額，避免殘餘本金或負餘額",}
+                    )
+                  )
+                  , _react2.default.createElement('p', { className: "text-xs text-slate-500" ,}, "實際貸款金額以銀行審批為準。浮息貸款結果假設當前利率在整個還款期內不變。金額內部以高精度計算，僅在顯示時四捨五入。"
+
+                  )
+                )
+
+                , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-6 xl:grid-cols-2"   ,}
+                  , _react2.default.createElement(Panel, { icon: _lucidereact.PiggyBank, title: "初始現金需求明細",}
+                    , _react2.default.createElement('dl', { className: "divide-y divide-slate-100" ,}
+                      , _react2.default.createElement(Row, { label: "首期", value: hkd(m.down),} )
+                      , _react2.default.createElement(Row, { label: "印花稅（手動）", value: hkd(m.fees.stamp),} )
+                      , _react2.default.createElement(Row, { label: "律師費", value: hkd(m.fees.legal),} )
+                      , _react2.default.createElement(Row, { label: "代理佣金", value: hkd(m.fees.agent),} )
+                      , _react2.default.createElement(Row, { label: "其他費用", value: hkd(m.fees.other),} )
+                      , _react2.default.createElement(Row, { label: "現金支付的按揭保費", value: hkd(m.cashPremium),} )
+                      , _react2.default.createElement(Row, { label: "合計", value: hkd(m.cashNeed), strong: true,} )
+                    )
+                    , m.financedPremium > 0 && (
+                      _react2.default.createElement('p', { className: "text-xs text-slate-500" ,}, "已融資保費 "
+                         , hkd(m.financedPremium), " 不計入初始現金需求。"
+                      )
+                    )
+                  )
+
+                  , _react2.default.createElement(Panel, { icon: _lucidereact.Wallet, title: "供款與入息比率（DSR）",}
+                    , m.dsr === null ? (
+                      _react2.default.createElement('p', { className: "text-lg font-semibold text-slate-600"  ,}, "請填寫有效收入")
+                    ) : (
+                      _react2.default.createElement('div', null
+                        , _react2.default.createElement('p', { className: "text-3xl font-bold text-blue-900 tabular-nums"   ,}, pct(m.dsr, 1))
+                        , _react2.default.createElement('div', {
+                          className: "mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200"     ,
+                          role: "img",
+                          'aria-label': `DSR ${pct(m.dsr, 1)}`,}
+
+                          , _react2.default.createElement('div', {
+                            className: "h-2 rounded-full bg-blue-900"  ,
+                            style: { width: `${clamp(m.dsr, 0, 100)}%` },}
+                          )
+                        )
+                      )
+                    )
+                    , _react2.default.createElement('p', { className: "text-xs text-slate-500" ,}, "DSR = （按揭月供 "
+                         , hkd(m.sched.monthly), " + 其他每月債務 "   , hkd(m.debt), "）÷ 每月收入 × 100%。 僅用於負擔估算，不代表銀行一定批核；銀行會按自身準則及監管要求（包括壓力測試）評估。"
+
+                    )
+                  )
+                )
+
+                /* 圖表 */
+                , _react2.default.createElement(Panel, { icon: _lucidereact.TrendingUp, title: "圖表分析",}
+                  , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-6 xl:grid-cols-2"   ,}
+                    , _react2.default.createElement('div', null
+                      , _react2.default.createElement('h3', { className: "mb-2 text-sm font-semibold text-slate-700"   ,}, "本金與總利息構成（本金含融資保費）"
+
+                      )
+                      , _react2.default.createElement('div', { className: "h-64 w-full" ,}
+                        , _react2.default.createElement(_recharts.ResponsiveContainer, { width: "100%", height: "100%",}
+                          , _react2.default.createElement(_recharts.PieChart, null
+                            , _react2.default.createElement(_recharts.Pie, {
+                              data: [
+                                { name: "本金（含融資保費）", value: m.principal },
+                                { name: "總利息", value: m.sched.totalInterest },
+                              ],
+                              dataKey: "value",
+                              nameKey: "name",
+                              innerRadius: 55,
+                              outerRadius: 85,
+                              paddingAngle: 2,}
+
+                              , _react2.default.createElement(_recharts.Cell, { fill: "#1e3a8a",} )
+                              , _react2.default.createElement(_recharts.Cell, { fill: "#f59e0b",} )
+                            )
+                            , _react2.default.createElement(_recharts.Tooltip, { formatter: (v) => hkd(v),} )
+                            , _react2.default.createElement(_recharts.Legend, null )
+                          )
+                        )
+                      )
+                      , _react2.default.createElement('p', { className: "text-center text-xs text-slate-500"  ,}, "利息佔總還款 "
+                         , pct((m.sched.totalInterest / m.sched.totalPayment) * 100)
+                      )
+                    )
+
+                    , _react2.default.createElement('div', null
+                      , _react2.default.createElement('h3', { className: "mb-2 text-sm font-semibold text-slate-700"   ,}, "剩餘貸款餘額趨勢")
+                      , _react2.default.createElement('div', { className: "h-64 w-full" ,}
+                        , _react2.default.createElement(_recharts.ResponsiveContainer, { width: "100%", height: "100%",}
+                          , _react2.default.createElement(_recharts.AreaChart, { data: m.balanceData, margin: { top: 8, right: 8, left: 0, bottom: 0 },}
+                            , _react2.default.createElement(_recharts.CartesianGrid, { strokeDasharray: "3 3" , stroke: "#e2e8f0",} )
+                            , _react2.default.createElement(_recharts.XAxis, { dataKey: "year", tickFormatter: (y) => `${y}年`, tick: { fontSize: 12 },} )
+                            , _react2.default.createElement(_recharts.YAxis, { tickFormatter: compact, width: 56, tick: { fontSize: 12 },} )
+                            , _react2.default.createElement(_recharts.Tooltip, { formatter: (v) => hkd(v), labelFormatter: (l) => `第 ${l} 年末`,} )
+                            , _react2.default.createElement(_recharts.Area, {
+                              type: "monotone",
+                              dataKey: "balance",
+                              name: "剩餘本金",
+                              stroke: "#1e3a8a",
+                              fill: "#bfdbfe",}
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+
+                  , _react2.default.createElement('div', null
+                    , _react2.default.createElement('h3', { className: "mb-2 text-sm font-semibold text-slate-700"   ,}, "年度本金與利息")
+                    , _react2.default.createElement('div', { className: "h-72 w-full" ,}
+                      , _react2.default.createElement(_recharts.ResponsiveContainer, { width: "100%", height: "100%",}
+                        , _react2.default.createElement(_recharts.BarChart, { data: m.annual, margin: { top: 8, right: 8, left: 0, bottom: 0 },}
+                          , _react2.default.createElement(_recharts.CartesianGrid, { strokeDasharray: "3 3" , stroke: "#e2e8f0",} )
+                          , _react2.default.createElement(_recharts.XAxis, { dataKey: "year", tickFormatter: (y) => `${y}`, tick: { fontSize: 12 },} )
+                          , _react2.default.createElement(_recharts.YAxis, { tickFormatter: compact, width: 56, tick: { fontSize: 12 },} )
+                          , _react2.default.createElement(_recharts.Tooltip, { formatter: (v) => hkd(v), labelFormatter: (l) => `第 ${l} 年`,} )
+                          , _react2.default.createElement(_recharts.Legend, null )
+                          , _react2.default.createElement(_recharts.Bar, { dataKey: "principal", name: "本金", stackId: "a", fill: "#1e3a8a",} )
+                          , _react2.default.createElement(_recharts.Bar, { dataKey: "interest", name: "利息", stackId: "a", fill: "#f59e0b",} )
+                        )
+                      )
+                    )
+                  )
+                )
+
+                /* 利率情景 */
+                , _react2.default.createElement(Panel, { icon: _lucidereact.Percent, title: "利率情景分析（假設，並非預測）",}
+                  , _react2.default.createElement('p', { className: "text-xs text-slate-500" ,}, "以下情景假設"
+                    , _react2.default.createElement('strong', null, "最終適用的年利率"), "整體上升，並非只對 HIBOR 單獨加點；亦未計算封頂等合約限制。這些只是壓力假設，不是對未來利率的預測。"
+                  )
+                  , _react2.default.createElement('div', { className: "overflow-x-auto",}
+                    , _react2.default.createElement('table', { className: "min-w-full text-sm" ,}
+                      , _react2.default.createElement('caption', { className: "sr-only",}, "利率情景比較表")
+                      , _react2.default.createElement('thead', null
+                        , _react2.default.createElement('tr', { className: "border-b border-slate-200 text-left text-slate-500"   ,}
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-4 font-medium"  ,}, "情景")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-4 text-right font-medium"   ,}, "年利率")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-4 text-right font-medium"   ,}, "月供")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-4 text-right font-medium"   ,}, "較目前增加")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 text-right font-medium"  ,}, "DSR")
+                        )
+                      )
+                      , _react2.default.createElement('tbody', { className: "divide-y divide-slate-100" ,}
+                        , m.scenarios.map((s, i) => (
+                          _react2.default.createElement('tr', { key: s.label, className: i === 0 ? "bg-blue-50" : "",}
+                            , _react2.default.createElement('th', { scope: "row", className: "whitespace-nowrap py-2 pr-4 text-left font-medium text-slate-800"     ,}
+                              , s.label
+                            )
+                            , _react2.default.createElement('td', { className: "py-2 pr-4 text-right tabular-nums"   ,}, rateText(s.rate))
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-2 pr-4 text-right tabular-nums"    ,}, hkd(s.monthly))
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-2 pr-4 text-right tabular-nums"    ,}
+                              , i === 0 ? "—" : `+ ${hkd(s.increase)}`
+                            )
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-2 text-right tabular-nums"   ,}
+                              , s.dsr === null ? "請填寫有效收入" : pct(s.dsr, 1)
+                            )
+                          )
+                        ))
+                      )
+                    )
+                  )
+                )
+
+                /* 還款表 */
+                , _react2.default.createElement(Panel, {
+                  icon: _lucidereact.BookOpen,
+                  title: "逐月還款表",
+                  action: 
+                    _react2.default.createElement('button', {
+                      type: "button",
+                      onClick: () => downloadCsv(m.sched.rows),
+                      className: "inline-flex items-center gap-1 rounded-lg bg-blue-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"              ,}
+
+                      , _react2.default.createElement(_lucidereact.Download, { className: "h-4 w-4" , 'aria-hidden': "true",} ), "匯出 CSV"
+
+                    )
+                  ,}
+
+                  , _react2.default.createElement('div', { className: "flex flex-wrap items-center gap-2"   ,}
+                    , _react2.default.createElement('button', {
+                      type: "button",
+                      onClick: () => setTableYear(clamp(safeYear - 1, 1, maxYear)),
+                      disabled: safeYear <= 1,
+                      'aria-label': "上一年",
+                      className: "rounded-lg border border-slate-300 bg-white p-2 text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"           ,}
+
+                      , _react2.default.createElement(_lucidereact.ChevronLeft, { className: "h-4 w-4" , 'aria-hidden': "true",} )
+                    )
+                    , _react2.default.createElement('label', { htmlFor: "table-year", className: "sr-only",}, "選擇年度"
+
+                    )
+                    , _react2.default.createElement('select', {
+                      id: "table-year",
+                      value: safeYear,
+                      onChange: (ev) => setTableYear(Number(ev.target.value)),
+                      className: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"          ,}
+
+                      , Array.from({ length: maxYear }, (_, i) => i + 1).map((y) => (
+                        _react2.default.createElement('option', { key: y, value: y,}, "第 "
+                           , y, " 年（第 "  , (y - 1) * 12 + 1, "–", y * 12, " 期）"
+                        )
+                      ))
+                    )
+                    , _react2.default.createElement('button', {
+                      type: "button",
+                      onClick: () => setTableYear(clamp(safeYear + 1, 1, maxYear)),
+                      disabled: safeYear >= maxYear,
+                      'aria-label': "下一年",
+                      className: "rounded-lg border border-slate-300 bg-white p-2 text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"           ,}
+
+                      , _react2.default.createElement(_lucidereact.ChevronRight, { className: "h-4 w-4" , 'aria-hidden': "true",} )
+                    )
+                    , _react2.default.createElement('span', { className: "text-xs text-slate-500" ,}, "共 "
+                       , m.sched.n, " 期；CSV 會匯出全部期數（UTF-8 BOM）。"
+                    )
+                  )
+
+                  , _react2.default.createElement('div', { className: "overflow-x-auto",}
+                    , _react2.default.createElement('table', { className: "min-w-full text-sm" ,}
+                      , _react2.default.createElement('caption', { className: "sr-only",}, "第 " , safeYear, " 年逐月還款表" )
+                      , _react2.default.createElement('thead', null
+                        , _react2.default.createElement('tr', { className: "border-b border-slate-200 text-slate-500"  ,}
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-3 text-left font-medium"   ,}, "期數")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-3 text-right font-medium"   ,}, "月供")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-3 text-right font-medium"   ,}, "當月利息")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-3 text-right font-medium"   ,}, "當月本金")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 pr-3 text-right font-medium"   ,}, "剩餘本金")
+                          , _react2.default.createElement('th', { scope: "col", className: "py-2 text-right font-medium"  ,}, "累計利息")
+                        )
+                      )
+                      , _react2.default.createElement('tbody', { className: "divide-y divide-slate-100 tabular-nums"  ,}
+                        , yearRows.map((r) => (
+                          _react2.default.createElement('tr', { key: r.k, className: "hover:bg-slate-50",}
+                            , _react2.default.createElement('th', { scope: "row", className: "py-1.5 pr-3 text-left font-medium text-slate-700"    ,}
+                              , r.k
+                            )
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-1.5 pr-3 text-right"   ,}, nf2.format(r.payment))
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-1.5 pr-3 text-right"   ,}, nf2.format(r.interest))
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-1.5 pr-3 text-right"   ,}, nf2.format(r.principal))
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-1.5 pr-3 text-right"   ,}, nf2.format(r.balance))
+                            , _react2.default.createElement('td', { className: "whitespace-nowrap py-1.5 text-right"  ,}, nf2.format(r.cumInterest))
+                          )
+                        ))
+                      )
+                      , _react2.default.createElement('tfoot', null
+                        , _react2.default.createElement('tr', { className: "border-t border-slate-300 bg-slate-50 font-semibold text-slate-800 tabular-nums"     ,}
+                          , _react2.default.createElement('th', { scope: "row", className: "py-2 pr-3 text-left"  ,}, "本年合計")
+                          , _react2.default.createElement('td', { className: "whitespace-nowrap py-2 pr-3 text-right"   ,}, nf2.format(yearSum.payment))
+                          , _react2.default.createElement('td', { className: "whitespace-nowrap py-2 pr-3 text-right"   ,}, nf2.format(yearSum.interest))
+                          , _react2.default.createElement('td', { className: "whitespace-nowrap py-2 pr-3 text-right"   ,}, nf2.format(yearSum.principal))
+                          , _react2.default.createElement('td', { className: "py-2 pr-3" ,} )
+                          , _react2.default.createElement('td', { className: "py-2",} )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+
+            /* 免責聲明 */
+            , _react2.default.createElement('div', { className: "flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"         ,}
+              , _react2.default.createElement(_lucidereact.AlertTriangle, { className: "mt-0.5 h-5 w-5 shrink-0"   , 'aria-hidden': "true",} )
+              , _react2.default.createElement('p', null, "本工具僅供估算，不構成貸款報價、貸款審批、稅務或投資建議。實際供款、貸款金額、按揭保險及置業費用須以銀行、保險機構及相關政府部門的規定為準。浮動利率可能變化；銀行實際計息和捨入方法可能令結果有所不同。"
+
+              )
+            )
+          )
+        )
+
+        /* ============ 計算假設及信源 ============ */
+        , _react2.default.createElement('section', { className: "mt-8 rounded-xl border border-slate-200 bg-white shadow-sm"     , 'aria-labelledby': "sources-title",}
+          , _react2.default.createElement('div', { className: "border-b border-slate-100 px-4 py-3 sm:px-5"    ,}
+            , _react2.default.createElement('h2', { id: "sources-title", className: "flex items-center gap-2 text-base font-semibold text-blue-900"     ,}
+              , _react2.default.createElement(_lucidereact.BookOpen, { className: "h-5 w-5" , 'aria-hidden': "true",} ), "計算假設及信源"
+
+            )
+          )
+          , _react2.default.createElement('div', { className: "space-y-6 p-4 sm:p-5"  ,}
+            , _react2.default.createElement('div', { className: "rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"      ,}
+              , _react2.default.createElement('p', { className: "font-semibold",}, "核驗狀態：", POLICY_CONFIG.status)
+              , _react2.default.createElement('p', { className: "mt-1",}, "查閱日期："
+                , POLICY_CONFIG.checkedOn, "。", POLICY_CONFIG.checkMethod, "已核驗並用於計算的政策參數："
+
+                , POLICY_CONFIG.verifiedParameters.length === 0 ? "無" : POLICY_CONFIG.verifiedParameters.length + " 項", "。 本工具不自動判斷貸款資格，不提供未經核驗的印花稅計算，亦不會僅憑按揭成數或 DSR 顯示「保證獲批」。"
+
+              )
+            )
+
+            , _react2.default.createElement('div', { className: "grid grid-cols-1 gap-4 md:grid-cols-2"   ,}
+              , _react2.default.createElement('div', { className: "rounded-lg border border-slate-200 p-4"   ,}
+                , _react2.default.createElement('h3', { className: "text-sm font-semibold text-slate-800"  ,}, "1. 數學計算方法" )
+                , _react2.default.createElement('ul', { className: "mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600"     ,}
+                  , _react2.default.createElement('li', null, "每月等額供款：M = L × r(1+r)ⁿ ÷ ((1+r)ⁿ − 1)，r = 年利率 ÷ 12，n = 年期 × 12。"                )
+                  , _react2.default.createElement('li', null, "零利率：M = L ÷ n。"    )
+                  , _react2.default.createElement('li', null, "逐月計算利息、本金、餘額及累計利息；總利息由還款表彙總。")
+                  , _react2.default.createElement('li', null, "最後一期調整還款額以清償餘額。浮息假設利率全期不變。")
+                  , _react2.default.createElement('li', null, "估算基準 = min（成交價, 銀行估值）。"   )
+                )
+              )
+              , _react2.default.createElement('div', { className: "rounded-lg border border-slate-200 p-4"   ,}
+                , _react2.default.createElement('h3', { className: "text-sm font-semibold text-slate-800"  ,}, "2. 用戶自行輸入的參數" )
+                , _react2.default.createElement('ul', { className: "mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600"     ,}
+                  , _react2.default.createElement('li', null, "成交價、估值、按揭成數、貸款金額、年期。")
+                  , _react2.default.createElement('li', null, "年利率，或 HIBOR、加點、最優惠利率 P、封頂及 P 按減幅。"    )
+                  , _react2.default.createElement('li', null, "收入、其他債務、印花稅、律師費、佣金、其他費用及按揭保費。")
+                  , _react2.default.createElement('li', null, "預設值只是示範，並非政策上限、實時報價或推薦利率。")
+                )
+              )
+            )
+
+            , sourceGroups.map((g) => (
+              _react2.default.createElement('div', { key: g,}
+                , _react2.default.createElement('h3', { className: "mb-2 text-sm font-semibold text-slate-800"   ,}
+                  , g === "regulation" && "3. "
+                  , g === "insurance" && "4. "
+                  , g === "tax" && "5. "
+                  , g === "bank" && "6. "
+                  , CATEGORY_LABEL[g]
+                )
+                , _react2.default.createElement('ul', { className: "space-y-3",}
+                  , POLICY_CONFIG.sources
+                    .filter((s) => s.category === g)
+                    .map((s) => (
+                      _react2.default.createElement('li', { key: s.id, className: "rounded-lg border border-slate-200 p-3 text-sm"    ,}
+                        , _react2.default.createElement('p', { className: "text-xs text-slate-500" ,}, s.org)
+                        , _react2.default.createElement('a', {
+                          href: s.url,
+                          target: "_blank",
+                          rel: "noopener noreferrer" ,
+                          className: "mt-0.5 inline-flex items-start gap-1 font-medium text-blue-800 underline hover:text-blue-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"          ,}
+
+                          , _react2.default.createElement('span', { className: "break-words",}, s.title)
+                          , _react2.default.createElement(_lucidereact.ExternalLink, { className: "mt-0.5 h-3.5 w-3.5 shrink-0"   , 'aria-hidden': "true",} )
+                        )
+                        , _react2.default.createElement('dl', { className: "mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs text-slate-600 sm:grid-cols-2"       ,}
+                          , _react2.default.createElement('div', null
+                            , _react2.default.createElement('dt', { className: "inline font-medium" ,}, "生效日期：")
+                            , _react2.default.createElement('dd', { className: "inline",}, s.effective)
+                          )
+                          , _react2.default.createElement('div', null
+                            , _react2.default.createElement('dt', { className: "inline font-medium" ,}, "查閱日期：")
+                            , _react2.default.createElement('dd', { className: "inline",}, POLICY_CONFIG.checkedOn, "（", POLICY_CONFIG.status, "）")
+                          )
+                        )
+                        , _react2.default.createElement('p', { className: "mt-1 text-xs text-slate-600"  ,}, s.note)
+                      )
+                    ))
+                )
+              )
+            ))
+            , _react2.default.createElement('p', { className: "text-xs text-slate-500" ,}, "銀行的最優惠利率、HIBOR 報價來源、封頂及計息條款（例如按實際日數計息）可能與本工具的月利率簡化模型不同，請以所選銀行的產品資料概要及貸款文件為準。"
+
+            )
+          )
+        )
+      )
+    )
+  );
+} exports.default = HKMortgageCalculator;
+</script></head>
+  <body>
+  
+
+<div id="preview-app"></div></body></html>
